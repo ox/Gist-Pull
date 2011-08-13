@@ -29,10 +29,10 @@ files = meta['files']
 
 def download(uri, name) 
 	gist = open(uri).read
-	File.open(name, 'w') do |f|
+	File.open(name, 'w+') do |f|
 		f.puts gist
 	end
-	puts "    saved as #{Dir.pwd}/#{name}."
+	puts "  \e[32m√ #{name}\e[0m"
 end
 
 if files.length == 1
@@ -55,7 +55,6 @@ else
 	files.select!{ |f| files_desired.include? f}
 	puts "getting:"
 	files.each do |f| 
-		puts "  • #{f}"
 		download("https://gist.github.com/raw/#{ARGV[0]}/#{f}", f)
 	end
 end
