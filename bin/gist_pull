@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+#grab a gist and put it down locally
+#suggested .bash_profile alias: alias gist_pull='ruby /dir/to/gist_pull.rb'
+
+require 'open-uri'
+require 'json'
+
+def print_help
+	puts "gist_pull usage:"
+	puts "  gist_pull\t\tshow this help dialog"
+	puts "  gist_pull <gist id>\tfetches gist with id <gist id>\n\t\t\tif multiple files exists a choice is given via"
+	puts "\t\t\tprompt(:) and files should be listed on one line or 'all'"
+	exit(0)
+end
+
+
+print_help unless ARGV.length == 1
+
+
+meta = ""
+open("http://gist.github.com/api/v1/json/#{ARGV[0]}") { |f|
+	f.each_line {|line| meta << line }
+}
+
+meta = JSON.parse(meta)["gists"].first
+files = meta['files']
+#puts meta
+
+def download(uri, name) 
+	gist = open(uri).read
+	File.open(name, 'w') do |f|
+		f.puts gist
+	end
+	puts "    saved as #{Dir.pwd}/#{name}."
+end
+
+if files.length == 1
+	file_name = files.first
+	uri = "https://gist.github.com/raw/#{ARGV[0]}/#{file_name}"
+	puts "downloading: #{uri}"
+	download(uri, file_name)
+	
+else
+	puts "∆! multiple files in this gist:\n"
+	files.each {|f| puts "\t #{f}"}
+	puts "Which do you want to download?"
+	print ': '
+	f = STDIN.gets.chomp
+	files_desired = f.sub(',',' ').split(' ')
+	if f == 'all'
+		files_desired = files
+	end
+
+	files.select!{ |f| files_desired.include? f}
+	puts "getting:"
+	files.each do |f| 
+		puts "  • #{f}"
+		download("https://gist.github.com/raw/#{ARGV[0]}/#{f}", f)
+	end
+end
