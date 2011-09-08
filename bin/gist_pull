@@ -14,9 +14,14 @@ def print_help
 	exit(0)
 end
 
+print_help unless [1,2].include? ARGV.length
 
-print_help unless ARGV.length == 1
+run = false
 
+if ARGV.include? '-r'
+	run = true
+	ARGV.delete '-r'
+end
 
 meta = ""
 open("http://gist.github.com/api/v1/json/#{ARGV[0]}") { |f|
@@ -27,7 +32,12 @@ meta = JSON.parse(meta)["gists"].first
 files = meta['files']
 #puts meta
 
-def download(uri, name) 
+def run_gist(filename)
+	puts "  \e[33m---Running #{filename}---\e[0m"
+	system('ruby', filename)
+end
+
+def download(uri, name)
 	gist = open(uri).read
 	File.open(name, 'w+') do |f|
 		f.puts gist
@@ -40,7 +50,10 @@ if files.length == 1
 	uri = "https://gist.github.com/raw/#{ARGV[0]}/#{file_name}"
 	puts "downloading: #{uri}"
 	download(uri, file_name)
-	
+
+	if run
+		run_gist file_name
+	end
 else
 	puts "∆! multiple files in this gist:\n"
 	files.each {|f| puts "\t #{f}"}
@@ -54,7 +67,13 @@ else
 
 	files.select!{ |f| files_desired.include? f}
 	puts "getting:"
-	files.each do |f| 
+	files.each do |f|
 		download("https://gist.github.com/raw/#{ARGV[0]}/#{f}", f)
+	end
+
+	if run
+		print "Which file do you want to run?\n: "
+		run_which_file = STDIN.gets.chomp
+		run_gist run_which_file
 	end
 end
