@@ -74,6 +74,10 @@ else
 	if run
 		print "Which file do you want to run?\n: "
 		run_which_file = STDIN.gets.chomp
-		run_gist run_which_file
+		if files.include? run_which_file
+			run_gist run_which_file
+		else
+			puts "no such file"
+		end
 	end
 end
